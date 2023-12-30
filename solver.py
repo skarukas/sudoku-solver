@@ -194,7 +194,7 @@ class Solver:
             board: Board,
             find_all_solutions: bool = False,
             method: SearchMethod = SearchMethod.DFS,
-            debug=True) -> SolverResult:
+            debug=False) -> SolverResult:
         """Solve the Sudoku board. With find_all_solutions, the assumption is that the board has multiple solutions (not "proper"), and all possibile DFS branches will be explored."""
         # TODO: how to figure out whether a state is part of a branch already explored?
         # One way to see if they're NOT part of the same branch is if any of the filled-in tiles are different. However, this also applies to parent-child relationships, and we would want to keep the child state.
