@@ -1,7 +1,13 @@
 from board import Board
 from solver import Solver, Status
 
+import math
 import unittest
+import os
+import tqdm
+import random
+
+_DATA_DIR = "test_data"
 
 
 class SolverTest(unittest.TestCase):
@@ -10,11 +16,29 @@ class SolverTest(unittest.TestCase):
         solver = Solver(input_board)
         return solver.solve(input_board)
 
-    def _solve_and_check_solution(self, input_string_board: str, expected_string_board: str):
-        input_board = Board.from_string(input_string_board)
-        expected_board = Board.from_string(expected_string_board)
+    def _solve_sudoku_line_dataset(self, fname, max_puzzles=math.inf, description=None):
+        with open(fname) as f:
+            lines = f.readlines()
+            max_puzzles = min(max_puzzles, len(lines))
+            for line in tqdm.tqdm(random.sample(lines, max_puzzles), desc=description):
+                self._solve_sudoku_line(line)
 
+    def _solve_sudoku_line(self, s: str, board_size=9):
+        s = s.strip()
+        if not s or s.startswith("#"):
+            return
+        count = len(s)
+        self.assertEqual(math.sqrt(count), board_size,
+                         f"Issue loading board {s}")
+        input_string_board = "\n".join([
+            " ".join(list(s[i*board_size:(i+1)*board_size]))
+            for i in range(board_size)
+        ])
+        input_board = Board.from_string(input_string_board)
         solver_result = self._solve(input_board)
+        self._assert_solved(solver_result, input_board)
+
+    def _assert_solved(self, solver_result, input_board):
         self.assertEqual(solver_result.solver_status, Status.SOLVED)
         self.assertEqual(len(solver_result.solutions), 1)
 
@@ -27,6 +51,14 @@ input:
 
 unsolved output:
 {solution.board}""")
+
+    def _solve_and_check_solution(self, input_string_board: str, expected_string_board: str):
+        input_board = Board.from_string(input_string_board)
+        expected_board = Board.from_string(expected_string_board)
+        solver_result = self._solve(input_board)
+        self._assert_solved(solver_result, input_board)
+        solution = solver_result.solutions[0]
+
         self.assertEqual(solution.board.grid, expected_board.grid,
                          f"{solution}\n{expected_board}")
 
@@ -130,7 +162,7 @@ unsolved output:
           2 8 9 4 1 5 3 6 7
         """
         self._solve_and_check_solution(input_board, expected_board)
-    
+
     def test_no_solution_invalid_board_9x9(self):
         # Bottom right subgrid contains two 7's.
         input_string_board = """
@@ -147,7 +179,7 @@ unsolved output:
         input_board = Board.from_string(input_string_board)
         solver_result = self._solve(input_board)
         self.assertEqual(solver_result.solver_status, Status.NO_SOLUTION)
-    
+
     def test_no_solution_valid_board_4x4(self):
         # Board is valid but still cannot be solved.
         input_string_board = """
@@ -190,6 +222,22 @@ unsolved output:
           3 2 1 4
         """
         self._solve_and_check_solution(input_board, expected_board)
+
+    def test_9x9_serg_benchmark(self):
+        fname = "puzzles7_serg_benchmark"
+        self._solve_sudoku_line_dataset(
+            os.path.join(_DATA_DIR, fname),
+            max_puzzles=100,
+            description=fname
+        )
+
+    def test_9x9_kaggle(self):
+        fname = "puzzles0_kaggle"
+        self._solve_sudoku_line_dataset(
+            os.path.join(_DATA_DIR, fname),
+            max_puzzles=1000,
+            description=fname
+        )
 
 
 if __name__ == '__main__':
