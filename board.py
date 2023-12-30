@@ -121,6 +121,18 @@ class Board(SudokuIndexer):
         ]
         return cls(grid)
 
+    @classmethod
+    def from_single_line_string(cls, s: str) -> 'Board':
+        s = s.strip()
+        count = len(s)
+        board_size = int(math.sqrt(count))
+        assert board_size**2 == count, "Board must be square."
+        input_string_board = "\n".join([
+            " ".join(list(s[i*board_size:(i+1)*board_size]))
+            for i in range(board_size)
+        ])
+        return cls.from_string(input_string_board)
+
     def _get_game_size(self) -> tuple[int, int, int]:
         """Return (num_digits, num_subgrids, subgrid_size). Assume num_subgrids == subgrid_size."""
         # num_digits must be a square.

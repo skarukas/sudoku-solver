@@ -20,23 +20,15 @@ class SolverTest(unittest.TestCase):
         with open(fname) as f:
             lines = f.readlines()
             max_puzzles = min(max_puzzles, len(lines))
-            for line in tqdm.tqdm(random.sample(lines, max_puzzles), desc=description):
-                self._solve_sudoku_line(line)
-
-    def _solve_sudoku_line(self, s: str, board_size=9):
-        s = s.strip()
-        if not s or s.startswith("#"):
-            return
-        count = len(s)
-        self.assertEqual(math.sqrt(count), board_size,
-                         f"Issue loading board {s}")
-        input_string_board = "\n".join([
-            " ".join(list(s[i*board_size:(i+1)*board_size]))
-            for i in range(board_size)
-        ])
-        input_board = Board.from_string(input_string_board)
-        solver_result = self._solve(input_board)
-        self._assert_solved(solver_result, input_board)
+            lines_iter = tqdm.tqdm(random.sample(
+                lines, max_puzzles), desc=description)
+            for line in lines_iter:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                input_board = Board.from_single_line_string(line)
+                solver_result = self._solve(input_board)
+                self._assert_solved(solver_result, input_board)
 
     def _assert_solved(self, solver_result, input_board):
         self.assertEqual(solver_result.solver_status, Status.SOLVED)
